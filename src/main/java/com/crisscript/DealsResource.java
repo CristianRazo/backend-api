@@ -31,7 +31,7 @@ public class DealsResource {
     @Transactional
     public Response filterDeal(DealDTO incomingDeal) {
         ProcessedDeal existing = ProcessedDeal.findById(incomingDeal.id());
-
+        System.out.println("DEBUG: ID: " + incomingDeal.id() + " | Precio: " + incomingDeal.price());
         // 1. Regla de Heurística (Sniper Keywords)
         boolean isSniperMatch = SNIPER_KEYWORDS.stream()
                 .anyMatch(word -> incomingDeal.title().toLowerCase().contains(word));
