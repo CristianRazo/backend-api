@@ -15,12 +15,16 @@ public class DealsResource {
 
     // Lista de palabras clave de alta prioridad
     private static final List<String> SNIPER_KEYWORDS = List.of(
-            "error", "gratis", "regalo","santander", "historico", "histórico", "bug","fallo","rapido","pantalla","tv","monitor",
-            "gaming","gaming","ultra","led","4k","smart","android","ips","qled","oled","hdr","curvo","144hz","165hz","240hz","1ms","juego",
-            "portatil","portátil","laptop","notebook","ssd","m2","ram","memoria","procesador","cpu","ryzen","intel","nvidia","rtx","gtx","grafica","gráfica",
-            "tablet","movil","móvil","smartphone","telefono","teléfono","auriculares","auricular","cascos","smartwatch","reloj","wearable","ps5","xbox",
-            "switch","drone","camara","cámara","video","television","televisión","ssd","disco duro","pokemon","tcg","cartas"
-    );
+            "error", "gratis", "regalo", "santander", "historico", "histórico", "bug", "fallo", "rapido", "pantalla",
+            "tv", "monitor",
+            "gaming", "gaming", "ultra", "led", "4k", "smart", "android", "ips", "qled", "oled", "hdr", "curvo",
+            "144hz", "165hz", "240hz", "1ms", "juego",
+            "portatil", "portátil", "laptop", "notebook", "ssd", "m2", "ram", "memoria", "procesador", "cpu", "ryzen",
+            "intel", "nvidia", "rtx", "gtx", "grafica", "gráfica",
+            "tablet", "movil", "móvil", "smartphone", "telefono", "teléfono", "auriculares", "auricular", "cascos",
+            "smartwatch", "reloj", "wearable", "ps5", "xbox",
+            "switch", "drone", "camara", "cámara", "video", "television", "televisión", "ssd", "disco duro", "pokemon",
+            "tcg", "cartas");
 
     @POST
     @Path("/filter")
@@ -41,39 +45,53 @@ public class DealsResource {
             newDeal.persist();
 
             if (isSniperMatch) {
-                // Alertamos de inmediato, pero DB.notified sigue en FALSE
-                // para permitir que la regla de temperatura dispare después.
+                // Alertamos pero notified sigue en false para que la temperatura pueda disparar
+                // después
                 return Response.ok(newDeal).build();
             }
-            return Response.status(202).build(); // Guardada en silencio
+            return Response.status(202).build();
         }
 
-        // --- CASO SEGUIMIENTO (Ya existe en DB) ---
-        double currentTemp = incomingDeal.temperature() != null ? incomingDeal.temperature() : 0.0;
-        long minutesSinceLastUpdate = ChronoUnit.MINUTES.between(existing.updatedAt, LocalDateTime.now());
-        if (minutesSinceLastUpdate == 0)
-            minutesSinceLastUpdate = 1; // Evitar división por cero
+        // --- CASO SEGUIMIENTO (Aquí aplicamos los fallbacks de seguridad) ---
 
-        double tempDiff = currentTemp - existing.currentTemperature;
+        // FIX: Manejo de nulos para evitar el Error 500
+        LocalDateTime lastUpdate = (existing.updatedAt != null) ? existing.updatedAt : existing.createdAt;
+        // Si por algún motivo ambos son nulos (fallo de migración), asumimos que pasó 1
+        // min
+        if (lastUpdate == null)
+            lastUpdate = LocalDateTime.now().minusMinutes(1);
+
+        long minutesSinceLastUpdate = ChronoUnit.MINUTES.between(lastUpdate, LocalDateTime.now());
+        if (minutesSinceLastUpdate <= 0)
+            minutesSinceLastUpdate = 1;
+
+        double oldTemp = (existing.currentTemperature != null) ? existing.currentTemperature : 0.0;
+        double currentTemp = (incomingDeal.temperature() != null) ? incomingDeal.temperature() : 0.0;
+
+        double tempDiff = currentTemp - oldTemp;
         double velocity = tempDiff / minutesSinceLastUpdate;
 
-        // Actualizamos temperatura actual para la siguiente comparación
+        // Actualizamos temperatura y fecha para la siguiente vuelta
         existing.currentTemperature = currentTemp;
         existing.updatedAt = LocalDateTime.now();
 
         // 2. Regla de Velocidad/Aumento Inusual
-        // Dispara si subió > 20 grados o si la velocidad es > 5 grados por minuto
         boolean isSpiking = (tempDiff >= 20.0 || velocity >= 5.0);
 
+        // Solo disparamos si no hemos notificado por comportamiento (!notified)
+        // O si es un sniper match (esto permite que el sniper se repita si la oferta
+        // sube de temp)
         if (!existing.notified && (isSpiking || isSniperMatch)) {
-            // Si es por temperatura, marcamos como notificado para no repetir.
-            // Si es solo por keyword, podrías decidir no marcarlo aún.
-            if (isSpiking)
+
+            // Solo bloqueamos futuras notificaciones si fue por un spike de temperatura
+            // real
+            if (isSpiking) {
                 existing.notified = true;
+            }
 
             return Response.ok(existing).build();
         }
 
-        return Response.status(409).build(); // Nada interesante que reportar
+        return Response.status(409).build();
     }
 }
