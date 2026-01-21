@@ -3,23 +3,28 @@ package com.crisscript.model;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 
 @Entity
 public class ProcessedDeal extends PanacheEntityBase {
     @Id
     public String id;
+    
+    @Column(length = 500)
     public String title;
+    
     public Double initialTemperature;
-
-    // 1. Agregar los nuevos campos
-    public String link;
-    public Double price;
-
     public Double currentTemperature;
+    
+    @Column(length = 500)
+    public String link;
+    
+    public Double price;
+    
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
-    public boolean notified; // Para no avisar 20 veces de la misma oferta caliente
+    public boolean notified;
 
     public ProcessedDeal() {}
 

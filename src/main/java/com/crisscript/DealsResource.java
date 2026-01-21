@@ -30,8 +30,19 @@ public class DealsResource {
     @Path("/filter")
     @Transactional
     public Response filterDeal(DealDTO incomingDeal) {
+        // Debug mejorado
+        System.out.println("═══════════════════════════════════════════════════");
+        System.out.println("📦 DEAL RECIBIDO:");
+        System.out.println("   ID: " + incomingDeal.id());
+        System.out.println("   Título: " + incomingDeal.title());
+        System.out.println("   Precio: " + incomingDeal.price());
+        System.out.println("   Temperatura: " + incomingDeal.temperature());
+        System.out.println("   Link: " + incomingDeal.link());
+        System.out.println("   Merchant: " + incomingDeal.merchant());
+        System.out.println("   isExpired: " + incomingDeal.isExpired());
+        System.out.println("═══════════════════════════════════════════════════");
+        
         ProcessedDeal existing = ProcessedDeal.findById(incomingDeal.id());
-        System.out.println("DEBUG: ID: " + incomingDeal.id() + " | Precio: " + incomingDeal.price());
         // 1. Regla de Heurística (Sniper Keywords)
         boolean isSniperMatch = SNIPER_KEYWORDS.stream()
                 .anyMatch(word -> incomingDeal.title().toLowerCase().contains(word));
