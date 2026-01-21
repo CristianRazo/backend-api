@@ -30,8 +30,11 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -f src/main/docker/Dockerfile.native -t ghcr.io/${{ github.repository }}:latest .
-          docker push ghcr.io/${{ github.repository }}:latest
+          # Convertimos el nombre del repo a minúsculas dinámicamente
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          docker build -f src/main/docker/Dockerfile.native -t ${IMAGE_NAME}:latest .
+          docker push ${IMAGE_NAME}:latest
 
   deploy:
     needs: build
