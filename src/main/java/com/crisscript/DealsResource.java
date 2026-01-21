@@ -41,7 +41,9 @@ public class DealsResource {
             ProcessedDeal newDeal = new ProcessedDeal(
                     incomingDeal.id(),
                     incomingDeal.title(),
-                    incomingDeal.temperature());
+                    incomingDeal.temperature(),
+                    incomingDeal.link(),   
+                    incomingDeal.price());
             newDeal.persist();
 
             if (isSniperMatch) {

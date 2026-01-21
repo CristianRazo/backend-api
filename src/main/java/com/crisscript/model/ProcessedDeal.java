@@ -11,6 +11,11 @@ public class ProcessedDeal extends PanacheEntityBase {
     public String id;
     public String title;
     public Double initialTemperature;
+
+    // 1. Agregar los nuevos campos
+    public String link;
+    public Double price;
+
     public Double currentTemperature;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
@@ -18,7 +23,7 @@ public class ProcessedDeal extends PanacheEntityBase {
 
     public ProcessedDeal() {}
 
-    public ProcessedDeal(String id, String title, Double temp) {
+    public ProcessedDeal(String id, String title, Double temp, String link, Double price) {
         this.id = id;
         this.title = title;
         this.initialTemperature = temp;
@@ -26,5 +31,7 @@ public class ProcessedDeal extends PanacheEntityBase {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         this.notified = false;
+        this.link = link;
+        this.price = price;
     }
 }
